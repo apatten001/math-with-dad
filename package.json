@@ -1,0 +1,9 @@
+{
+  "name": "math-with-dad",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "lint": "echo 'No linting needed for plain HTML/JS' || exit 0"
+  }
+  
+}
