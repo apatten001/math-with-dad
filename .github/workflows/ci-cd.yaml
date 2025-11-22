@@ -1,0 +1,74 @@
+name: CI/CD
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+      packages: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials via OIDC
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }} 
+          role-session-name: GitHubActions-MathWithDad-${{ github.run_id }}
+
+      - name: Login to AWS ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push to ECR
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}  # ECR URI, e.g., 123456789012.dkr.ecr.us-east-1.amazonaws.com
+          ECR_REPOSITORY: math-with-dad  # Replace with your ECR repo name
+          IMAGE_TAG: latest
+        run: |
+          docker buildx build \
+            --platform linux/amd64 \
+            -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG \
+            --push \
+            .
+
+      - name: Run Trivy vulnerability scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ steps.login-ecr.outputs.registry }}/math-with-dad:latest
+          severity: 'CRITICAL,HIGH'
+          exit-code: '1'
+          ignore-unfixed: true
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+        env:
+          TRIVY_PASSWORD: ${{ steps.login-ecr.outputs.password }}
+
+      - name: Upload Trivy scan results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: 'trivy-results.sarif'
+
+      - name: Sync static assets to S3 (for CloudFront)
+        run: |
+          aws s3 sync app/ s3://math-with-dad-${{ github.run_id }}-bucket/ --delete
+        env:
+          AWS_REGION: ${{ vars.AWS_REGION }}
+
+      - name: Deploy to AWS (Terraform)
+        if: github.ref == 'refs/heads/main'
+        run: |
+          cd terraform
+          terraform init
+          terraform apply -auto-approve -var="ecr_repository_url=${{ steps.login-ecr.outputs.registry }}/math-with-dad:latest"
