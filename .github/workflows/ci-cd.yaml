@@ -52,6 +52,7 @@ jobs:
           ignore-unfixed: true
           format: 'sarif'
           output: 'trivy-results.sarif'
+          version: 'latest'
         env:
           TRIVY_PASSWORD: ${{ steps.login-ecr.outputs.password }}
 
