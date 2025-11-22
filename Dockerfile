@@ -10,6 +10,6 @@ RUN npm install -g html-minifier terser uglifycss && \
 # ---- Final Stage ----
 FROM amazon/aws-cli AS runtime
 # Use lightweight static server
-FROM caddy:2-alpine
+FROM caddy:2.8-alpine
 COPY --from=builder /app /usr/share/caddy
 EXPOSE 80
