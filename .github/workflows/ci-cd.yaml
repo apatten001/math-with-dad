@@ -50,8 +50,8 @@ jobs:
           severity: 'CRITICAL'
           exit-code: '0'
           ignore-unfixed: true
-          format: 'json'
-          output: 'trivy-results.json'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
           version: 'latest'
         env:
           TRIVY_PASSWORD: ${{ steps.login-ecr.outputs.password }}
