@@ -34,7 +34,7 @@ jobs:
       - name: Build and push to ECR
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}  # ECR URI, e.g., 123456789012.dkr.ecr.us-east-1.amazonaws.com
-          ECR_REPOSITORY: math-with-dad  # Replace with your ECR repo name
+          ECR_REPOSITORY: math-with-dad
           IMAGE_TAG: latest
         run: |
           docker buildx build \
