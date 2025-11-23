@@ -68,6 +68,11 @@ jobs:
         env:
           AWS_REGION: ${{ vars.AWS_REGION }}
 
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "latest"
+
       - name: Deploy to AWS (Terraform)
         if: github.ref == 'refs/heads/main'
         run: |
