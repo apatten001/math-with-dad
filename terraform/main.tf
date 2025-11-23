@@ -65,11 +65,7 @@ resource "aws_cloudfront_distribution" "cdn" {
     compress    = true
   }
 
-  restrictions {
-    geo_restriction {
-      restriction_type = "none"
-    }
-  }
+  restrictions { geo_restriction { restriction_type = "none" } }
   viewer_certificate { cloudfront_default_certificate = true }
 }
 
