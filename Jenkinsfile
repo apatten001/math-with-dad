@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        AWS_REGION         = 'us-east-1'
+        AWS_REGION         = 'us-east-2'
         ROLE_ARN           = credentials('math-with-dad-aws-role-arn')  // Jenkins credential ID (text)
         DOCKER_IMAGE       = "ghcr.io/${env.GIT_REPO_OWNER}/${env.JOB_NAME}:latest"
         TERRAFORM_DIR      = 'terraform'
@@ -12,9 +12,7 @@ pipeline {
         stage('Checkout') {
             steps {
                 checkout scm
-                githubNotify credentialsId: 'Github_creds', 
-                             status: 'PENDING', 
-                             description: 'Build started...'
+                
             }
         }
 
@@ -23,15 +21,12 @@ pipeline {
                 withAWS(role: "${ROLE_ARN}", roleAccount: '', duration: 3600, region: "${AWS_REGION}") {
                     script {
                         // Login to GHCR using Jenkins GitHub creds or PAT
-                        docker.withRegistry('https://ghcr.io', 'github-pat-credential-id') {  // optional: add PAT in Jenkins creds
+                        docker.withRegistry('https://ghcr.io', 'GITHUB_TOKEN') {  // optional: add PAT in Jenkins creds
                             sh 'docker build -t ${DOCKER_IMAGE} .'
                             sh 'docker push ${DOCKER_IMAGE}'
                         }
                     }
                 }
-                githubNotify credentialsId: 'Github_creds', 
-                             status: 'PENDING', 
-                             description: 'Building & pushing Docker image...'
             }
         }
 
@@ -49,9 +44,6 @@ pipeline {
                             --no-progress ${DOCKER_IMAGE}
                     '''
                 }
-                githubNotify credentialsId: 'Github_creds', 
-                             status: 'PENDING', 
-                             description: 'Building & pushing Docker image...'
             }
         }
 
@@ -64,9 +56,6 @@ pipeline {
                         sh 'terraform plan -auto-approve'
                     }
                 }
-                githubNotify credentialsId: 'Github_creds', 
-                             status: 'PENDING', 
-                             description: 'Building & pushing Docker image...'
             }
         }
     }
@@ -77,15 +66,9 @@ pipeline {
         }
         success {
             echo 'Math With Dad deployed successfully! 🚀'
-            githubNotify credentialsId: 'Github_creds', 
-            status: 'PENDING', 
-            description: 'Math With Dad deployed successfully! 🚀'
         }
         failure {
             echo 'Pipeline failed — check logs.'
-            githubNotify credentialsId: 'Github_creds', 
-                     status: 'PENDING', 
-                     description: 'Pipeline failed — check logs.'
         }
     }
 }
