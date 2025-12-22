@@ -12,6 +12,9 @@ pipeline {
         stage('Checkout') {
             steps {
                 checkout scm
+                githubNotify credentialsId: 'GITHUB_TOKEN', 
+                             status: 'PENDING', 
+                             description: 'Build started...'
             }
         }
 
@@ -26,6 +29,9 @@ pipeline {
                         }
                     }
                 }
+                githubNotify credentialsId: 'github-status-token', 
+                             status: 'PENDING', 
+                             description: 'Building & pushing Docker image...'
             }
         }
 
@@ -43,6 +49,9 @@ pipeline {
                             --no-progress ${DOCKER_IMAGE}
                     '''
                 }
+                githubNotify credentialsId: 'GITHUB_TOKEN', 
+                             status: 'PENDING', 
+                             description: 'Building & pushing Docker image...'
             }
         }
 
@@ -55,6 +64,9 @@ pipeline {
                         sh 'terraform plan -auto-approve'
                     }
                 }
+                githubNotify credentialsId: 'GITHUB_TOKEN', 
+                             status: 'PENDING', 
+                             description: 'Building & pushing Docker image...'
             }
         }
     }
@@ -65,9 +77,15 @@ pipeline {
         }
         success {
             echo 'Math With Dad deployed successfully! 🚀'
+            githubNotify credentialsId: 'GITHUB_TOKEN', 
+            status: 'PENDING', 
+            description: 'Math With Dad deployed successfully! 🚀'
         }
         failure {
             echo 'Pipeline failed — check logs.'
+            githubNotify credentialsId: 'GITHUB_TOKEN', 
+                     status: 'PENDING', 
+                     description: 'Pipeline failed — check logs.'
         }
     }
 }
